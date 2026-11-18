@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>RUBICON CLOCK — Spotify</title>
+<style>body{font:17px system-ui;background:#101010;color:white;max-width:560px;margin:40px auto;padding:16px}a{color:#1db954}code{word-break:break-all}</style>
+</head>
+<body>
+<h2>RUBICON CLOCK — Spotify</h2>
+<p id="status">Trwa przekazywanie autoryzacji do zegara w lokalnej sieci Wi-Fi…</p>
+<p id="fallback"></p>
+<script>
+'use strict';
+// Host this unmodified file on your own HTTPS site, for example GitHub Pages.
+// ESP32 sends the nonce and its LAN address in OAuth state; no tokens are stored here.
+(function() {
+  const p = new URLSearchParams(location.search);
+  const state = p.get('state') || '';
+  const code = p.get('code');
+  const error = p.get('error');
+  const pos = state.indexOf('.');
+  const ip = pos === -1 ? '' : state.slice(pos+1);
+  const validIp = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/.test(ip);
+  const msg = document.getElementById('status');
+  if (!validIp || (!code && !error)) {
+    msg.textContent = 'Brak danych logowania lub niepoprawny adres zegara. Wroc do strony konfiguracji ESP32.';
+    return;
+  }
+  const dest = new URL('http://' + ip + '/spotify/callback');
+  if (code) dest.searchParams.set('code', code);
+  if (error) dest.searchParams.set('error', error);
+  dest.searchParams.set('state', state);
+  msg.textContent = 'Zalogowano w Spotify. Otwieranie zegara: ' + ip;
+  const link = document.createElement('a');
+  link.href = dest.href;
+  link.textContent = 'Jesli przekierowanie nie zadziala, dotknij tutaj';
+  document.getElementById('fallback').appendChild(link);
+  // This is a top-level browser navigation (not fetch) from HTTPS to private HTTP.
+  location.replace(dest.href);
+})();
+</script>
+</body>
+</html>
